@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet, Text, FlatList, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  Animated,
+} from 'react-native';
 import Header from '../../components/Header';
 import SearchBar from '../../components/SearchBar';
 
-// Recent searches
 const recentSearches = [
   { id: 1, label: 'Nasi Goreng' },
   { id: 2, label: 'Kue Cokelat' },
@@ -12,32 +20,31 @@ const recentSearches = [
   { id: 5, label: 'Spaghetti' },
 ];
 
-// Recent blog/articles
 const recentBlogs = [
-  { 
-    id: 1, 
+  {
+    id: 1,
     title: '5 Tips Membuat Omelet Sempurna',
-    image: 'https://cdn.hellosehat.com/wp-content/uploads/2018/06/resep-omelet.jpg?w=256&q=100' 
+    image: 'https://cdn.hellosehat.com/wp-content/uploads/2018/06/resep-omelet.jpg?w=256&q=100',
   },
-  { 
-    id: 2, 
+  {
+    id: 2,
     title: 'Resep Pizza Rumahan Anti Gagal',
-    image: 'https://cdn1-production-images-kly.akamaized.net/k7ranhldHspQ8QLCTCHRREhvDwE=/0x281:4653x2903/640x360/filters:quality(75):strip_icc():format(webp)/kly-media-production/medias/3049433/original/093267200_1581580862-shutterstock_294636281.jpg' 
+    image: 'https://cdn1-production-images-kly.akamaized.net/k7ranhldHspQ8QLCTCHRREhvDwE=/0x281:4653x2903/640x360/filters:quality(75):strip_icc():format(webp)/kly-media-production/medias/3049433/original/093267200_1581580862-shutterstock_294636281.jpg',
   },
-  { 
-    id: 3, 
+  {
+    id: 3,
     title: 'Cara Cepat Membuat Sushi di Rumah',
-    image: 'https://int.japanesetaste.com/cdn/shop/articles/how-to-make-makizushi-sushi-rolls-japanese-taste.jpg?v=1707914944&width=1920' 
+    image: 'https://int.japanesetaste.com/cdn/shop/articles/how-to-make-makizushi-sushi-rolls-japanese-taste.jpg?v=1707914944&width=1920',
   },
-  { 
-    id: 4, 
+  {
+    id: 4,
     title: 'Burger Homemade dengan Daging Empuk',
-    image: 'https://asset.kompas.com/crops/JFC1_i_OaGvcNEviEw4WKk-r3qQ=/12x51:892x637/750x500/data/photo/2022/03/05/622358ed771fb.jpg' 
+    image: 'https://asset.kompas.com/crops/JFC1_i_OaGvcNEviEw4WKk-r3qQ=/12x51:892x637/750x500/data/photo/2022/03/05/622358ed771fb.jpg',
   },
-  { 
-    id: 5, 
+  {
+    id: 5,
     title: 'Rahasia Membuat Spaghetti Carbonara',
-    image: 'https://i.pinimg.com/736x/04/cc/36/04cc3677a177c1bd0077793ffa1f1c56.jpg' 
+    image: 'https://i.pinimg.com/736x/04/cc/36/04cc3677a177c1bd0077793ffa1f1c56.jpg',
   },
 ];
 
@@ -65,26 +72,48 @@ const FlatListRecent = () => {
 
 export default function DiscoverScreen() {
   const [searchQuery, setSearchQuery] = useState('');
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   return (
     <View style={styles.container}>
       <Header />
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-        <SearchBar onSearchChange={setSearchQuery} />
 
+      {/* SearchBar tetap di atas */}
+      <View style={styles.fixedSearchBar}>
+        <SearchBar onSearchChange={setSearchQuery} />
+      </View>
+
+      {/* Scrollable content */}
+      <ScrollView contentContainerStyle={{ paddingTop: 90, paddingBottom: 100 }}>
         <View style={{ paddingHorizontal: 24, paddingVertical: 10 }}>
           <Text style={styles.sectionTitle}>Recent Search</Text>
           <FlatListRecent />
         </View>
 
-        <View style={styles.listCard}>
+        <Animated.View style={[styles.listCard, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           {recentBlogs.map((item) => (
             <TouchableOpacity key={item.id} style={styles.card}>
               <Image source={{ uri: item.image }} style={styles.cardImage} />
               <Text style={styles.cardTitle}>{item.title}</Text>
             </TouchableOpacity>
           ))}
-        </View>
+        </Animated.View>
       </ScrollView>
     </View>
   );
@@ -92,6 +121,16 @@ export default function DiscoverScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FDF6EC' },
+  fixedSearchBar: {
+    position: 'absolute',
+    top: 60,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    backgroundColor: '#FDF6EC',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
